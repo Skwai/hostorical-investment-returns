@@ -104,9 +104,6 @@ class Calculation:
         sns.lineplot(
             x="year",
             y="value",
-            # hue="variable",
-            # estimator="median",
-            # orient="x",
             data=pd.melt(data, ["year"]),
             markers=True,
         )
