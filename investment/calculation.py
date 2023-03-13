@@ -1,8 +1,11 @@
 import csv
+import matplotlib.pyplot as plt
+import math
 
 
 class Calculation:
-    historical_returns: list[tuple[int, float]] = []
+    historical_data: list[tuple[int, float]] = []
+    returns = []
 
     def __init__(self, **kwargs):
         self.principal = kwargs.get("principal")
@@ -15,11 +18,11 @@ class Calculation:
         with open("./data/sp500.csv") as input:
             reader = csv.DictReader(input, delimiter=",")
 
-            self.historical_returns = []
+            self.historical_data = []
 
             for row in reader:
-                year = (int(row["year"], 10), float(row["total_return"]))
-                self.historical_returns.append(year)
+                year = (int(row["year"]), float(row["total_return"]))
+                self.historical_data.append(year)
 
     def __calculate_for_period(self, returns_for_period) -> float:
         balance = self.principal
@@ -35,12 +38,21 @@ class Calculation:
         return balance
 
     def __get_historical_returns(self, start, end):
-        return self.historical_returns[start:end]
+        return self.historical_data[start:end]
+
+    def __sort_returns(self):
+        return self.returns.sort(key=lambda item: item[1])
+
+    def get_percentile(self, percentile: int):
+        count = len(self.returns)
+        index = min(max(0, math.floor(count * (percentile / 100))), count - 1)
+
+        return self.returns[index]
 
     def calculate(self):
-        end = len(self.historical_returns) - self.duration
+        end = len(self.historical_data) - self.duration
 
-        balances = []
+        self.returns = []
 
         for i in range(end):
             returns = self.__get_historical_returns(i, i + self.duration)
@@ -49,6 +61,11 @@ class Calculation:
             period_end_year = returns[-1][0]
 
             balance = self.__calculate_for_period(returns)
-            balances.append((f"{period_start_year}-{period_end_year}", round(balance)))
 
-        return balances
+            self.returns.append(
+                (f"{period_start_year}-{period_end_year}", round(balance))
+            )
+
+        self.__sort_returns()
+
+        return self.returns
